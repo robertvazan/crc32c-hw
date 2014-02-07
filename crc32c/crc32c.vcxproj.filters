@@ -24,6 +24,9 @@
     <ClInclude Include="crc32c.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="crc32c-internal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
