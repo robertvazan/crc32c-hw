@@ -10,13 +10,8 @@
 #define CRC32C_API __declspec(dllimport)
 #endif
 
-// This class is exported from the crc32c.dll
-class CRC32C_API Ccrc32c {
-public:
-	Ccrc32c(void);
-	// TODO: add your methods here.
-};
+#include <stdint.h>
 
-extern CRC32C_API int ncrc32c;
+extern "C" CRC32C_API uint32_t crc32c_append(uint32_t crc, const void *input, size_t length);
 
-CRC32C_API int fncrc32c(void);
+extern "C" CRC32C_API void crc32c_unittest();
