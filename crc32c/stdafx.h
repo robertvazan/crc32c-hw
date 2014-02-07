@@ -8,6 +8,7 @@
 #include "targetver.h"
 
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
+#define NOMINMAX
 // Windows Header Files:
 #include <windows.h>
 
@@ -16,3 +17,9 @@
 // TODO: reference additional headers your program requires here
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+#include <random>
+#include <algorithm>
+
+#include <nmmintrin.h>
