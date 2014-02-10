@@ -7,3 +7,4 @@ x64
 ipch
 x86
 *.opensdf
+*.aps

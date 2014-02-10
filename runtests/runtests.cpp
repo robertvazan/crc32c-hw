@@ -7,7 +7,6 @@
 
 int main(int argc, char* argv[])
 {
-	crc32c_unittest();
-	return 0;
+    crc32c_unittest();
+    return 0;
 }
-
