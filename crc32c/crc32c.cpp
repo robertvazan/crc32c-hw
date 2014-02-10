@@ -194,7 +194,11 @@ static uint32_t append_hw(uint32_t crc, buffer buf, size_t len)
 {
     buffer next = buf;
     buffer end;
-    uint64_t crc0, crc1, crc2;      /* need to be 64 bits for crc32q */
+#ifdef _M_X64
+	uint64_t crc0, crc1, crc2;      /* need to be 64 bits for crc32q */
+#else
+	uint32_t crc0, crc1, crc2;
+#endif
 
     /* pre-process the crc */
     crc0 = crc ^ 0xffffffff;
@@ -203,11 +207,12 @@ static uint32_t append_hw(uint32_t crc, buffer buf, size_t len)
        to an eight-byte boundary */
     while (len && ((uintptr_t)next & 7) != 0)
 	{
-		crc0 = _mm_crc32_u8((uint32_t)crc0, *next);
+		crc0 = _mm_crc32_u8(static_cast<uint32_t>(crc0), *next);
         ++next;
         --len;
     }
 
+#ifdef _M_X64
     /* compute the crc on sets of LONG*3 bytes, executing three independent crc
        instructions, each on LONG bytes -- this is optimized for the Nehalem,
        Westmere, Sandy Bridge, and Ivy Bridge architectures, which have a
@@ -250,26 +255,78 @@ static uint32_t append_hw(uint32_t crc, buffer buf, size_t len)
         len -= 3 * SHORT;
     }
 
-    /* compute the crc on the remaining eight-byte units less than a SHORT*3
-       block */
-    end = next + (len - (len & 7));
-    while (next < end)
+	/* compute the crc on the remaining eight-byte units less than a SHORT*3
+	block */
+	end = next + (len - (len & 7));
+	while (next < end)
 	{
 		crc0 = _mm_crc32_u64(crc0, *reinterpret_cast<const uint64_t *>(next));
-        next += 8;
-    }
+		next += 8;
+	}
+#else
+	/* compute the crc on sets of LONG*3 bytes, executing three independent crc
+	instructions, each on LONG bytes -- this is optimized for the Nehalem,
+	Westmere, Sandy Bridge, and Ivy Bridge architectures, which have a
+	throughput of one crc per cycle, but a latency of three cycles */
+	while (len >= 3 * LONG)
+	{
+		crc1 = 0;
+		crc2 = 0;
+		end = next + LONG;
+		do
+		{
+			crc0 = _mm_crc32_u32(crc0, *reinterpret_cast<const uint32_t *>(next));
+			crc1 = _mm_crc32_u32(crc1, *reinterpret_cast<const uint32_t *>(next + LONG));
+			crc2 = _mm_crc32_u32(crc2, *reinterpret_cast<const uint32_t *>(next + 2 * LONG));
+			next += 4;
+		} while (next < end);
+		crc0 = shift_crc(long_shifts, static_cast<uint32_t>(crc0)) ^ crc1;
+		crc0 = shift_crc(long_shifts, static_cast<uint32_t>(crc0)) ^ crc2;
+		next += 2 * LONG;
+		len -= 3 * LONG;
+	}
+
+	/* do the same thing, but now on SHORT*3 blocks for the remaining data less
+	than a LONG*3 block */
+	while (len >= 3 * SHORT)
+	{
+		crc1 = 0;
+		crc2 = 0;
+		end = next + SHORT;
+		do
+		{
+			crc0 = _mm_crc32_u32(crc0, *reinterpret_cast<const uint32_t *>(next));
+			crc1 = _mm_crc32_u32(crc1, *reinterpret_cast<const uint32_t *>(next + SHORT));
+			crc2 = _mm_crc32_u32(crc2, *reinterpret_cast<const uint32_t *>(next + 2 * SHORT));
+			next += 4;
+		} while (next < end);
+		crc0 = shift_crc(short_shifts, static_cast<uint32_t>(crc0)) ^ crc1;
+		crc0 = shift_crc(short_shifts, static_cast<uint32_t>(crc0)) ^ crc2;
+		next += 2 * SHORT;
+		len -= 3 * SHORT;
+	}
+
+	/* compute the crc on the remaining eight-byte units less than a SHORT*3
+	block */
+	end = next + (len - (len & 7));
+	while (next < end)
+	{
+		crc0 = _mm_crc32_u32(crc0, *reinterpret_cast<const uint32_t *>(next));
+		next += 4;
+	}
+#endif
     len &= 7;
 
     /* compute the crc for up to seven trailing bytes */
     while (len)
 	{
-		crc0 = _mm_crc32_u8((uint32_t)crc0, *next);
+		crc0 = _mm_crc32_u8(static_cast<uint32_t>(crc0), *next);
 		++next;
         --len;
     }
 
     /* return a post-processed crc */
-    return (uint32_t)crc0 ^ 0xffffffff;
+	return static_cast<uint32_t>(crc0) ^ 0xffffffff;
 }
 
 static uint32_t append_switch(uint32_t crc, buffer input, size_t length)
@@ -289,7 +346,7 @@ extern "C" CRC32C_API uint32_t crc32c_append(uint32_t crc, const void *input, si
 }
 
 #define TEST_BUFFER 65536
-#define TEST_SLICES 1000
+#define TEST_SLICES 10000
 
 static int benchmark(const char *name, uint32_t(*function)(uint32_t, buffer, size_t), buffer input, int *offsets, int *lengths, uint32_t *crcs)
 {
