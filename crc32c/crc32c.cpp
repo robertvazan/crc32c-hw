@@ -19,10 +19,11 @@
   madler@alumni.caltech.edu
 
 
-  Note by Robert Vazan:
+  Changes by Robert Vazan:
 
   The source was modified for compatibility with Visual C++ and to run in 32-bit mode.
   I've added benchmark & test code and a trivial implementation for consistency checks.
+  Software implementation was optimized to process 16 bytes at a time.
  */
 
 #include "stdafx.h"
