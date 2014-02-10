@@ -43,7 +43,7 @@ static uint32_t append_trivial(uint32_t crc, buffer input, size_t length)
 	return crc;
 }
 
-static uint32_t table[8][256];
+static uint32_t table[16][256];
 
 /* Construct table for software CRC-32C calculation. */
 static void initialize_table()
@@ -64,7 +64,7 @@ static void initialize_table()
 	for (uint32_t n = 0; n < 256; ++n)
 	{
 		uint32_t crc = table[0][n];
-		for (int k = 1; k < 8; k++)
+		for (int k = 1; k < 16; k++)
 			crc = table[k][n] = table[0][crc & 0xff] ^ (crc >> 8);
 	}
 }
@@ -72,13 +72,13 @@ static void initialize_table()
 /* Table-driven software version as a fall-back.  This is about 15 times slower
    than using the hardware instructions.  This assumes little-endian integers,
    as is the case on Intel processors that the assembler code here is for. */
-static uint32_t append_table(uint32_t crci, buffer input, size_t length)
+static uint32_t append_adler_table(uint32_t crci, buffer input, size_t length)
 {
 	buffer next = input;
 	uint64_t crc;
 
 	crc = crci ^ 0xffffffff;
-	while (length && ((uintptr_t)next & 7) != 0)
+	while (length && ((uintptr_t)next & 15) != 0)
 	{
 		crc = table[0][(crc ^ *next++) & 0xff] ^ (crc >> 8);
 		--length;
@@ -97,6 +97,78 @@ static uint32_t append_table(uint32_t crci, buffer input, size_t length)
 		next += 8;
 		length -= 8;
 	}
+	while (length)
+	{
+		crc = table[0][(crc ^ *next++) & 0xff] ^ (crc >> 8);
+		--length;
+	}
+	return (uint32_t)crc ^ 0xffffffff;
+}
+
+/* Table-driven software version as a fall-back.  This is about 15 times slower
+   than using the hardware instructions.  This assumes little-endian integers,
+   as is the case on Intel processors that the assembler code here is for. */
+static uint32_t append_table(uint32_t crci, buffer input, size_t length)
+{
+	buffer next = input;
+#ifdef _M_X64
+	uint64_t crc;
+#else
+	uint32_t crc;
+#endif
+
+	crc = crci ^ 0xffffffff;
+#ifdef _M_X64
+	while (length && ((uintptr_t)next & 15) != 0)
+	{
+		crc = table[0][(crc ^ *next++) & 0xff] ^ (crc >> 8);
+		--length;
+	}
+	while (length >= 16)
+	{
+		crc ^= *(uint64_t *)next;
+		uint64_t high = *(uint64_t *)(next + 8);
+		crc = table[15][crc & 0xff]
+			^ table[14][(crc >> 8) & 0xff]
+			^ table[13][(crc >> 16) & 0xff]
+			^ table[12][(crc >> 24) & 0xff]
+			^ table[11][(crc >> 32) & 0xff]
+			^ table[10][(crc >> 40) & 0xff]
+			^ table[9][(crc >> 48) & 0xff]
+			^ table[8][crc >> 56]
+			^ table[7][high & 0xff]
+			^ table[6][(high >> 8) & 0xff]
+			^ table[5][(high >> 16) & 0xff]
+			^ table[4][(high >> 24) & 0xff]
+			^ table[3][(high >> 32) & 0xff]
+			^ table[2][(high >> 40) & 0xff]
+			^ table[1][(high >> 48) & 0xff]
+			^ table[0][high >> 56];
+		next += 16;
+		length -= 16;
+	}
+#else
+	while (length && ((uintptr_t)next & 7) != 0)
+	{
+		crc = table[0][(crc ^ *next++) & 0xff] ^ (crc >> 8);
+		--length;
+	}
+	while (length >= 8)
+	{
+		crc ^= *(uint32_t *)next;
+		uint32_t high = *(uint32_t *)(next + 4);
+		crc = table[7][crc & 0xff]
+			^ table[6][(crc >> 8) & 0xff]
+			^ table[5][(crc >> 16) & 0xff]
+			^ table[4][crc >> 24]
+			^ table[3][high & 0xff]
+			^ table[2][(high >> 8) & 0xff]
+			^ table[1][(high >> 16) & 0xff]
+			^ table[0][high >> 24];
+		next += 8;
+		length -= 8;
+	}
+#endif
 	while (length)
 	{
 		crc = table[0][(crc ^ *next++) & 0xff] ^ (crc >> 8);
@@ -444,11 +516,14 @@ extern "C" CRC32C_API void crc32c_unittest()
 		offsets[i] = offsetDist(rd);
 	}
 	uint32_t *crcsTrivial = new uint32_t[TEST_SLICES];
+	uint32_t *crcsAdlerTable = new uint32_t[TEST_SLICES];
 	uint32_t *crcsTable = new uint32_t[TEST_SLICES];
 	uint32_t *crcsHw = new uint32_t[TEST_SLICES];
 	int iterationsTrivial = benchmark("trivial", append_trivial, input, offsets, lengths, crcsTrivial);
+	int iterationsAdlerTable = benchmark("adler_table", append_adler_table, input, offsets, lengths, crcsAdlerTable);
+	compare_crcs("trivial", crcsTrivial, "adler_table", crcsAdlerTable, std::min(iterationsTrivial, iterationsAdlerTable));
 	int iterationsTable = benchmark("table", append_table, input, offsets, lengths, crcsTable);
-	compare_crcs("trivial", crcsTrivial, "table", crcsTable, std::min(iterationsTrivial, iterationsTable));
+	compare_crcs("adler_table", crcsAdlerTable, "table", crcsTable, std::min(iterationsAdlerTable, iterationsTable));
 	int iterationsHw = benchmark("hw", append_hw, input, offsets, lengths, crcsHw);
 	compare_crcs("table", crcsTable, "hw", crcsHw, std::min(iterationsTable, iterationsHw));
 	benchmark("auto", crc32c_append, input, offsets, lengths, crcsHw);
