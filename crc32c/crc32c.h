@@ -9,7 +9,7 @@
 
 #include <stdint.h>
 
-extern "C" CRC32C_API uint32_t crc32c_append(uint32_t crc, const void *input, size_t length);
+extern "C" CRC32C_API uint32_t crc32c_append(uint32_t crc, const uint8_t *input, size_t length);
 
 extern "C" CRC32C_API void crc32c_unittest();
 

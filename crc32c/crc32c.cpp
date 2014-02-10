@@ -18,7 +18,9 @@
   Mark Adler
   madler@alumni.caltech.edu
 
+
   Note by Robert Vazan:
+
   The source was modified for compatibility with Visual C++ and to run in 32-bit mode.
   I've added benchmark & test code and a trivial implementation for consistency checks.
  */
@@ -356,15 +358,28 @@ static uint32_t append_switch(uint32_t crc, buffer input, size_t length)
 	return append_table(crc, input, length);
 }
 
+static bool hw_available;
+
+static void detect_hw()
+{
+	int info[4];
+	__cpuid(info, 1);
+	hw_available = (info[2] & (1 << 20));
+}
+
 void crc32c_initialize()
 {
 	initialize_table();
 	initialize_hw();
+	detect_hw();
 }
 
-extern "C" CRC32C_API uint32_t crc32c_append(uint32_t crc, const void *input, size_t length)
+extern "C" CRC32C_API uint32_t crc32c_append(uint32_t crc, buffer input, size_t length)
 {
-	return append_switch(crc, reinterpret_cast<buffer>(input), length);
+	if (hw_available)
+		return append_hw(crc, input, length);
+	else
+		return append_table(crc, input, length);
 }
 
 #define TEST_BUFFER 65536
@@ -436,4 +451,5 @@ extern "C" CRC32C_API void crc32c_unittest()
 	compare_crcs("trivial", crcsTrivial, "table", crcsTable, std::min(iterationsTrivial, iterationsTable));
 	int iterationsHw = benchmark("hw", append_hw, input, offsets, lengths, crcsHw);
 	compare_crcs("table", crcsTable, "hw", crcsHw, std::min(iterationsTable, iterationsHw));
+	benchmark("auto", crc32c_append, input, offsets, lengths, crcsHw);
 }
