@@ -438,12 +438,17 @@ static void detect_hw()
     hw_available = (info[2] & (1 << 20));
 }
 
-void crc32c_initialize()
+struct crc32c_initialize
 {
-    initialize_table();
-    initialize_hw();
-    detect_hw();
-}
+    crc32c_initialize()
+    {
+        initialize_table();
+        initialize_hw();
+        detect_hw();
+    }
+};
+
+static crc32c_initialize initialize;
 
 extern "C" CRC32C_API uint32_t crc32c_append(uint32_t crc, buffer input, size_t length)
 {
