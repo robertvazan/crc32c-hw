@@ -91,7 +91,7 @@ static uint32_t append_adler_table(uint32_t crci, buffer input, size_t length)
     uint64_t crc;
 
     crc = crci ^ 0xffffffff;
-    while (length && ((uintptr_t)next & 15) != 0)
+    while (length && ((uintptr_t)next & 7) != 0)
     {
         crc = table[0][(crc ^ *next++) & 0xff] ^ (crc >> 8);
         --length;
@@ -132,7 +132,7 @@ static uint32_t append_table(uint32_t crci, buffer input, size_t length)
 
     crc = crci ^ 0xffffffff;
 #ifdef _M_X64
-    while (length && ((uintptr_t)next & 15) != 0)
+    while (length && ((uintptr_t)next & 7) != 0)
     {
         crc = table[0][(crc ^ *next++) & 0xff] ^ (crc >> 8);
         --length;
@@ -161,25 +161,30 @@ static uint32_t append_table(uint32_t crci, buffer input, size_t length)
         length -= 16;
     }
 #else
-    while (length && ((uintptr_t)next & 7) != 0)
+    while (length && ((uintptr_t)next & 3) != 0)
     {
         crc = table[0][(crc ^ *next++) & 0xff] ^ (crc >> 8);
         --length;
     }
-    while (length >= 8)
+    while (length >= 12)
     {
         crc ^= *(uint32_t *)next;
         uint32_t high = *(uint32_t *)(next + 4);
-        crc = table[7][crc & 0xff]
-            ^ table[6][(crc >> 8) & 0xff]
-            ^ table[5][(crc >> 16) & 0xff]
-            ^ table[4][crc >> 24]
-            ^ table[3][high & 0xff]
-            ^ table[2][(high >> 8) & 0xff]
-            ^ table[1][(high >> 16) & 0xff]
-            ^ table[0][high >> 24];
-        next += 8;
-        length -= 8;
+        uint32_t high2 = *(uint32_t *)(next + 8);
+        crc = table[11][crc & 0xff]
+            ^ table[10][(crc >> 8) & 0xff]
+            ^ table[9][(crc >> 16) & 0xff]
+            ^ table[8][crc >> 24]
+            ^ table[7][high & 0xff]
+            ^ table[6][(high >> 8) & 0xff]
+            ^ table[5][(high >> 16) & 0xff]
+            ^ table[4][high >> 24]
+            ^ table[3][high2 & 0xff]
+            ^ table[2][(high2 >> 8) & 0xff]
+            ^ table[1][(high2 >> 16) & 0xff]
+            ^ table[0][high2 >> 24];
+        next += 12;
+        length -= 12;
     }
 #endif
     while (length)
