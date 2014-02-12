@@ -8,3 +8,4 @@ ipch
 x86
 *.opensdf
 *.aps
+*.nupkg

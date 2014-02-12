@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Crc32C</id>
+    <version>1.0.0</version>
+    <authors>Robert Važan</authors>
+    <owners>Robert Važan</owners>
+    <licenseUrl>http://crc32c.angeloflogic.com/license/</licenseUrl>
+    <projectUrl>http://crc32c.angeloflogic.com/</projectUrl>
+    <iconUrl>http://crc32c.angeloflogic.com/images/nuget-icon.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Hardware-accelerated implementation of CRC-32C (Castagnoli) with super fast software fallback for C++ projects. Don't confuse with ordinary CRC-32.</description>
+    <releaseNotes>Initial release.</releaseNotes>
+    <copyright>Copyright (c) 2014 Robert Važan</copyright>
+    <tags>crc, crc32, crc-32, crc32c, crc-32c, native</tags>
+  </metadata>
+  <files>
+    <file src="..\crc32c\crc32c.h" target="\lib\native\include\crc32c.h" />
+    <file src="..\crc32c\crc32c.cpp" target="\lib\native\src\crc32c.cpp" />
+    <file src="Crc32C.targets" target="\build\native\Crc32C.targets" />
+  </files>
+</package>
