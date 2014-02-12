@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.21005.1
+VisualStudioVersion = 12.0.30110.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "crc32c", "crc32c\crc32c.vcxproj", "{D9F001C8-8B37-49DB-B163-5917C71E496A}"
 EndProject
@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "runtests", "runtests\runtes
 	ProjectSection(ProjectDependencies) = postProject
 		{D9F001C8-8B37-49DB-B163-5917C71E496A} = {D9F001C8-8B37-49DB-B163-5917C71E496A}
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "packagetest", "packagetest\packagetest.vcxproj", "{BF1EEFDA-50C2-4131-A81F-DD3C49016B8C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -34,6 +36,14 @@ Global
 		{DE1E979A-FF9E-40BD-BF00-B4CEF1AC0116}.Release|Win32.Build.0 = Release|Win32
 		{DE1E979A-FF9E-40BD-BF00-B4CEF1AC0116}.Release|x64.ActiveCfg = Release|x64
 		{DE1E979A-FF9E-40BD-BF00-B4CEF1AC0116}.Release|x64.Build.0 = Release|x64
+		{BF1EEFDA-50C2-4131-A81F-DD3C49016B8C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BF1EEFDA-50C2-4131-A81F-DD3C49016B8C}.Debug|Win32.Build.0 = Debug|Win32
+		{BF1EEFDA-50C2-4131-A81F-DD3C49016B8C}.Debug|x64.ActiveCfg = Debug|x64
+		{BF1EEFDA-50C2-4131-A81F-DD3C49016B8C}.Debug|x64.Build.0 = Debug|x64
+		{BF1EEFDA-50C2-4131-A81F-DD3C49016B8C}.Release|Win32.ActiveCfg = Release|Win32
+		{BF1EEFDA-50C2-4131-A81F-DD3C49016B8C}.Release|Win32.Build.0 = Release|Win32
+		{BF1EEFDA-50C2-4131-A81F-DD3C49016B8C}.Release|x64.ActiveCfg = Release|x64
+		{BF1EEFDA-50C2-4131-A81F-DD3C49016B8C}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

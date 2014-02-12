@@ -9,3 +9,5 @@ x86
 *.opensdf
 *.aps
 *.nupkg
+syntax: regexp
+packages/.*[0-9].*

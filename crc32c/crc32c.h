@@ -1,10 +1,14 @@
 #ifndef CRC32C_H
 #define CRC32C_H
 
+#ifndef CRC32C_STATIC
 #ifdef CRC32C_EXPORTS
 #define CRC32C_API __declspec(dllexport)
 #else
 #define CRC32C_API __declspec(dllimport)
+#endif
+#else
+#define CRC32C_API
 #endif
 
 #include <stdint.h>

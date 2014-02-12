@@ -17,6 +17,6 @@
   <files>
     <file src="..\crc32c\crc32c.h" target="\lib\native\include\crc32c.h" />
     <file src="..\crc32c\crc32c.cpp" target="\lib\native\src\crc32c.cpp" />
-    <file src="Crc32C.targets" target="\build\native\Crc32C.targets" />
+    <file src="Crc32C.props" target="\build\native\Crc32C.props" />
   </files>
 </package>
