@@ -9,8 +9,13 @@
 
 #include <stdint.h>
 
-extern "C" CRC32C_API uint32_t  // computed CRC-32C (Castagnoli)
-crc32c_append(                  // calculates CRC-32C, utilizing HW automatically if available
+/*
+    Computes CRC-32C using Castagnoli polynomial of 0x82f63b78.
+    This polynomial is better at detecting errors than the more common CRC-32 polynomial.
+    CRC-32C is implemented in hardware on newer Intel processors.
+    This function will use the hardware if available and fall back to fast software implementation.
+*/
+extern "C" CRC32C_API uint32_t crc32c_append(
     uint32_t crc,               // initial CRC, typically 0, may be used to accumulate CRC from multiple buffers
     const uint8_t *input,       // data to be put through the CRC algorithm
     size_t length);             // length of the data in the input buffer

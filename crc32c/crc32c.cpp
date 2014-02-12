@@ -29,8 +29,17 @@
   - wrapped up in a clean DLL
   */
 
-#include "stdafx.h"
 #include "crc32c.h"
+
+#define NOMINMAX
+#include <windows.h>
+
+#include <nmmintrin.h>
+#include <stdio.h>
+
+#include <random>
+#include <algorithm>
+
 
 #define POLY 0x82f63b78
 
@@ -435,7 +444,7 @@ static void detect_hw()
 {
     int info[4];
     __cpuid(info, 1);
-    hw_available = (info[2] & (1 << 20));
+    hw_available = (info[2] & (1 << 20)) != 0;
 }
 
 struct crc32c_initialize
