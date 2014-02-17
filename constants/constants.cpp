@@ -3,13 +3,106 @@
 
 #include "stdafx.h"
 
-#define POLY 0x82f63b78
+#define POLY 0x1EDC6F41
+#define IEEEPOLY 0x04C11DB7
 
 /* Block sizes for three-way parallel crc computation.  LONG_SHIFT and SHORT_SHIFT must
    both be powers of two.  The associated string constants must be set
    accordingly, for use in constructing the assembler instructions. */
 #define LONG_SHIFT 8192
 #define SHORT_SHIFT 256
+
+typedef const uint8_t *buffer;
+
+static uint32_t compute_trivial(buffer input, size_t length, uint32_t poly)
+{
+    uint32_t crc = 0;
+    for (size_t i = 0; i < length; ++i)
+    {
+        crc = crc ^ input[i];
+        for (int j = 0; j < 8; j++)
+            crc = (crc >> 1) ^ 0x80000000 ^ ((~crc & 1) * poly);
+    }
+    return crc;
+}
+
+static uint32_t reverse_bitwise(uint32_t poly)
+{
+    uint32_t reversed = 0;
+    for (int i = 0; i < 32; ++i)
+    {
+        reversed = (reversed << 1) + (poly & 1);
+        poly >>= 1;
+    }
+    return reversed;
+}
+
+static uint64_t reverse_bitwise64(uint64_t poly)
+{
+    uint64_t reversed = 0;
+    for (int i = 0; i < 64; ++i)
+    {
+        reversed = (reversed << 1) + (poly & 1);
+        poly >>= 1;
+    }
+    return reversed;
+}
+
+static uint64_t reverse_full(uint32_t poly)
+{
+    return ((uint64_t)reverse_bitwise(poly) << 1) | 1;
+}
+
+static uint32_t mod_poly(buffer input, int length, uint32_t poly)
+{
+    uint32_t r = ((uint32_t)input[0] << 24) | ((uint32_t)input[1] << 16) | ((uint32_t)input[2] << 8) | (uint32_t)input[3];
+    while (length > 4)
+    {
+        for (int b = 7; b >= 0; --b)
+        {
+            if (r & 0x80000000u)
+            {
+                r <<= 1;
+                r |= input[4] >> b;
+                r ^= poly;
+            }
+            else
+            {
+                r <<= 1;
+                r |= input[4] >> b;
+            }
+        }
+        --length;
+    }
+    return r;
+}
+
+static uint64_t div_poly(buffer input, int length, uint32_t poly)
+{
+    uint32_t r = ((uint32_t)input[0] << 24) | ((uint32_t)input[1] << 16) | ((uint32_t)input[2] << 8) | (uint32_t)input[3];
+    uint32_t d = 0;
+    while (length > 4)
+    {
+        for (int b = 7; b >= 0; --b)
+        {
+            d <<= 1;
+            if (r & 0x80000000u)
+            {
+                r <<= 1;
+                r |= input[4] >> b;
+                r ^= poly;
+                d |= 1;
+            }
+            else
+            {
+                r <<= 1;
+                r |= input[4] >> b;
+            }
+        }
+        --length;
+    }
+    return d;
+}
 
 /* Construct table for software CRC-32C calculation. */
 static void initialize_table(uint32_t table[][256], int levels, uint32_t poly)
@@ -163,16 +256,38 @@ static uint32_t table[16][256];
 static uint32_t long_shifts[4][256];
 static uint32_t short_shifts[4][256];
 
+static uint64_t compute_reversed_clmul_constant(int shift, uint32_t poly)
+{
+    static uint8_t a[100] = { 1 };
+    return (uint64_t)reverse_bitwise(mod_poly(a, shift / 8 + 1, poly)) << 1;
+}
+
+static void check_clmul_constants()
+{
+    std::cout << "P(x)' = " << std::hex << reverse_full(IEEEPOLY) << std::endl;
+    std::cout << "k1' = " << std::hex << compute_reversed_clmul_constant(4 * 128 + 32, IEEEPOLY) << std::endl;
+    std::cout << "k2' = " << std::hex << compute_reversed_clmul_constant(4 * 128 - 32, IEEEPOLY) << std::endl;
+    std::cout << "k3' = " << std::hex << compute_reversed_clmul_constant(128 + 32, IEEEPOLY) << std::endl;
+    std::cout << "k4' = " << std::hex << compute_reversed_clmul_constant(128 - 32, IEEEPOLY) << std::endl;
+    std::cout << "k5' = " << std::hex << compute_reversed_clmul_constant(64, IEEEPOLY) << std::endl;
+    std::cout << "k6' = " << std::hex << compute_reversed_clmul_constant(32, IEEEPOLY) << std::endl;
+    static uint8_t a[100] = { 1 };
+    std::cout << "u' = " << std::hex << ((uint64_t)reverse_bitwise(div_poly(a, 9, IEEEPOLY)) << 1) << std::endl;
+}
+
 int main(int argc, char* argv[])
 {
     try
     {
-        initialize_table(table, 16, POLY);
-        make_shift_table(long_shifts, LONG_SHIFT, POLY);
-        make_shift_table(short_shifts, SHORT_SHIFT, POLY);
+        check_clmul_constants();
+        uint32_t reversed_poly = reverse_bitwise(POLY);
+        initialize_table(table, 16, reversed_poly);
+        make_shift_table(long_shifts, LONG_SHIFT, reversed_poly);
+        make_shift_table(short_shifts, SHORT_SHIFT, reversed_poly);
         std::ofstream out;
         out.exceptions(std::ios::badbit | std::ios::failbit);
         out.open("generated-constants.cpp", std::ios_base::trunc);
+        out << "#define POLY 0x" << std::hex << std::setw(8) << std::setfill('0') << reversed_poly << std::dec << std::endl;
         out << "#define LONG_SHIFT " << LONG_SHIFT << std::endl;
         out << "#define SHORT_SHIFT " << SHORT_SHIFT << std::endl;
         out << std::endl;

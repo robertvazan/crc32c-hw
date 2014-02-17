@@ -41,8 +41,6 @@
 #include <algorithm>
 
 
-#define POLY 0x82f63b78
-
 typedef const uint8_t *buffer;
 
 
