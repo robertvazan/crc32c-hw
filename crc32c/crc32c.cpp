@@ -45,6 +45,10 @@
 
 typedef const uint8_t *buffer;
 
+
+#include "generated-constants.cpp"
+
+
 static uint32_t append_trivial(uint32_t crc, buffer input, size_t length)
 {
     for (size_t i = 0; i < length; ++i)
@@ -54,32 +58,6 @@ static uint32_t append_trivial(uint32_t crc, buffer input, size_t length)
             crc = (crc >> 1) ^ 0x80000000 ^ ((~crc & 1) * POLY);
     }
     return crc;
-}
-
-static uint32_t table[16][256];
-
-/* Construct table for software CRC-32C calculation. */
-static void initialize_table()
-{
-    for (uint32_t n = 0; n < 256; ++n)
-    {
-        uint32_t crc = n;
-        crc = crc & 1 ? (crc >> 1) ^ POLY : crc >> 1;
-        crc = crc & 1 ? (crc >> 1) ^ POLY : crc >> 1;
-        crc = crc & 1 ? (crc >> 1) ^ POLY : crc >> 1;
-        crc = crc & 1 ? (crc >> 1) ^ POLY : crc >> 1;
-        crc = crc & 1 ? (crc >> 1) ^ POLY : crc >> 1;
-        crc = crc & 1 ? (crc >> 1) ^ POLY : crc >> 1;
-        crc = crc & 1 ? (crc >> 1) ^ POLY : crc >> 1;
-        crc = crc & 1 ? (crc >> 1) ^ POLY : crc >> 1;
-        table[0][n] = crc;
-    }
-    for (uint32_t n = 0; n < 256; ++n)
-    {
-        uint32_t crc = table[0][n];
-        for (int k = 1; k < 16; k++)
-            crc = table[k][n] = table[0][crc & 0xff] ^ (crc >> 8);
-    }
 }
 
 /* Table-driven software version as a fall-back.  This is about 15 times slower
@@ -195,112 +173,13 @@ static uint32_t append_table(uint32_t crci, buffer input, size_t length)
     return (uint32_t)crc ^ 0xffffffff;
 }
 
-/* Multiply a matrix times a vector over the Galois field of two elements,
-   GF(2).  Each element is a bit in an unsigned integer.  mat must have at
-   least as many entries as the power of two for most significant one bit in
-   vec. */
-static inline uint32_t gf2_matrix_times(uint32_t *mat, uint32_t vec)
-{
-    uint32_t sum = 0;
-    while (vec)
-    {
-        if (vec & 1)
-            sum ^= *mat;
-        vec >>= 1;
-        ++mat;
-    }
-    return sum;
-}
-
-/* Multiply a matrix by itself over GF(2).  Both mat and square must have 32 rows. */
-static inline void gf2_matrix_square(uint32_t *square, uint32_t *mat)
-{
-    for (int n = 0; n < 32; n++)
-        square[n] = gf2_matrix_times(mat, mat[n]);
-}
-
-/* Construct an operator to apply len zeros to a crc.  len must be a power of
-   two.  If len is not a power of two, then the result is the same as for the
-   largest power of two less than len.  The result for len == 0 is the same as
-   for len == 1.  A version of this routine could be easily written for any
-   len, but that is not needed for this application. */
-static void make_shift_op(uint32_t *even, size_t len)
-{
-    uint32_t odd[32];       /* odd-power-of-two zeros operator */
-
-    /* put operator for one zero bit in odd */
-    odd[0] = POLY;
-    uint32_t row = 1;
-    for (int n = 1; n < 32; ++n)
-    {
-        odd[n] = row;
-        row <<= 1;
-    }
-
-    /* put operator for two zero bits in even */
-    gf2_matrix_square(even, odd);
-
-    /* put operator for four zero bits in odd */
-    gf2_matrix_square(odd, even);
-
-    /* first square will put the operator for one zero byte (eight zero bits),
-       in even -- next square puts operator for two zero bytes in odd, and so
-       on, until len has been rotated down to zero */
-    do
-    {
-        gf2_matrix_square(even, odd);
-        len >>= 1;
-        if (len == 0)
-            return;
-        gf2_matrix_square(odd, even);
-        len >>= 1;
-    } while (len);
-
-    /* answer ended up in odd -- copy to even */
-    for (int n = 0; n < 32; ++n)
-        even[n] = odd[n];
-}
-
-/* Take a length and build four lookup tables for applying the zeros operator
-   for that length, byte-by-byte on the operand. */
-static void make_shift_table(uint32_t zeros[][256], size_t len)
-{
-    uint32_t op[32];
-    make_shift_op(op, len);
-
-    for (uint32_t n = 0; n < 256; n++)
-    {
-        zeros[0][n] = gf2_matrix_times(op, n);
-        zeros[1][n] = gf2_matrix_times(op, n << 8);
-        zeros[2][n] = gf2_matrix_times(op, n << 16);
-        zeros[3][n] = gf2_matrix_times(op, n << 24);
-    }
-}
-
 /* Apply the zeros operator table to crc. */
-static inline uint32_t shift_crc(uint32_t zeros[][256], uint32_t crc)
+static inline uint32_t shift_crc(uint32_t shift_table[][256], uint32_t crc)
 {
-    return zeros[0][crc & 0xff]
-        ^ zeros[1][(crc >> 8) & 0xff]
-        ^ zeros[2][(crc >> 16) & 0xff]
-        ^ zeros[3][crc >> 24];
-}
-
-/* Block sizes for three-way parallel crc computation.  LONG and SHORT must
-   both be powers of two.  The associated string constants must be set
-   accordingly, for use in constructing the assembler instructions. */
-#define LONG 8192
-#define SHORT 256
-
-/* Tables for hardware crc that shift a crc by LONG and SHORT zeros. */
-static uint32_t long_shifts[4][256];
-static uint32_t short_shifts[4][256];
-
-/* Initialize tables for shifting crcs. */
-static void initialize_hw()
-{
-    make_shift_table(long_shifts, LONG);
-    make_shift_table(short_shifts, SHORT);
+    return shift_table[0][crc & 0xff]
+        ^ shift_table[1][(crc >> 8) & 0xff]
+        ^ shift_table[2][(crc >> 16) & 0xff]
+        ^ shift_table[3][crc >> 24];
 }
 
 /* Compute CRC-32C using the Intel hardware instruction. */
@@ -327,49 +206,49 @@ static uint32_t append_hw(uint32_t crc, buffer buf, size_t len)
     }
 
 #ifdef _M_X64
-    /* compute the crc on sets of LONG*3 bytes, executing three independent crc
-       instructions, each on LONG bytes -- this is optimized for the Nehalem,
+    /* compute the crc on sets of LONG_SHIFT*3 bytes, executing three independent crc
+       instructions, each on LONG_SHIFT bytes -- this is optimized for the Nehalem,
        Westmere, Sandy Bridge, and Ivy Bridge architectures, which have a
        throughput of one crc per cycle, but a latency of three cycles */
-    while (len >= 3 * LONG)
+    while (len >= 3 * LONG_SHIFT)
     {
         crc1 = 0;
         crc2 = 0;
-        end = next + LONG;
+        end = next + LONG_SHIFT;
         do
         {
             crc0 = _mm_crc32_u64(crc0, *reinterpret_cast<const uint64_t *>(next));
-            crc1 = _mm_crc32_u64(crc1, *reinterpret_cast<const uint64_t *>(next + LONG));
-            crc2 = _mm_crc32_u64(crc2, *reinterpret_cast<const uint64_t *>(next + 2 * LONG));
+            crc1 = _mm_crc32_u64(crc1, *reinterpret_cast<const uint64_t *>(next + LONG_SHIFT));
+            crc2 = _mm_crc32_u64(crc2, *reinterpret_cast<const uint64_t *>(next + 2 * LONG_SHIFT));
             next += 8;
         } while (next < end);
         crc0 = shift_crc(long_shifts, static_cast<uint32_t>(crc0)) ^ crc1;
         crc0 = shift_crc(long_shifts, static_cast<uint32_t>(crc0)) ^ crc2;
-        next += 2 * LONG;
-        len -= 3 * LONG;
+        next += 2 * LONG_SHIFT;
+        len -= 3 * LONG_SHIFT;
     }
 
-    /* do the same thing, but now on SHORT*3 blocks for the remaining data less
-       than a LONG*3 block */
-    while (len >= 3 * SHORT)
+    /* do the same thing, but now on SHORT_SHIFT*3 blocks for the remaining data less
+       than a LONG_SHIFT*3 block */
+    while (len >= 3 * SHORT_SHIFT)
     {
         crc1 = 0;
         crc2 = 0;
-        end = next + SHORT;
+        end = next + SHORT_SHIFT;
         do
         {
             crc0 = _mm_crc32_u64(crc0, *reinterpret_cast<const uint64_t *>(next));
-            crc1 = _mm_crc32_u64(crc1, *reinterpret_cast<const uint64_t *>(next + SHORT));
-            crc2 = _mm_crc32_u64(crc2, *reinterpret_cast<const uint64_t *>(next + 2 * SHORT));
+            crc1 = _mm_crc32_u64(crc1, *reinterpret_cast<const uint64_t *>(next + SHORT_SHIFT));
+            crc2 = _mm_crc32_u64(crc2, *reinterpret_cast<const uint64_t *>(next + 2 * SHORT_SHIFT));
             next += 8;
         } while (next < end);
         crc0 = shift_crc(short_shifts, static_cast<uint32_t>(crc0)) ^ crc1;
         crc0 = shift_crc(short_shifts, static_cast<uint32_t>(crc0)) ^ crc2;
-        next += 2 * SHORT;
-        len -= 3 * SHORT;
+        next += 2 * SHORT_SHIFT;
+        len -= 3 * SHORT_SHIFT;
     }
 
-    /* compute the crc on the remaining eight-byte units less than a SHORT*3
+    /* compute the crc on the remaining eight-byte units less than a SHORT_SHIFT*3
     block */
     end = next + (len - (len & 7));
     while (next < end)
@@ -378,49 +257,49 @@ static uint32_t append_hw(uint32_t crc, buffer buf, size_t len)
         next += 8;
     }
 #else
-    /* compute the crc on sets of LONG*3 bytes, executing three independent crc
-    instructions, each on LONG bytes -- this is optimized for the Nehalem,
+    /* compute the crc on sets of LONG_SHIFT*3 bytes, executing three independent crc
+    instructions, each on LONG_SHIFT bytes -- this is optimized for the Nehalem,
     Westmere, Sandy Bridge, and Ivy Bridge architectures, which have a
     throughput of one crc per cycle, but a latency of three cycles */
-    while (len >= 3 * LONG)
+    while (len >= 3 * LONG_SHIFT)
     {
         crc1 = 0;
         crc2 = 0;
-        end = next + LONG;
+        end = next + LONG_SHIFT;
         do
         {
             crc0 = _mm_crc32_u32(crc0, *reinterpret_cast<const uint32_t *>(next));
-            crc1 = _mm_crc32_u32(crc1, *reinterpret_cast<const uint32_t *>(next + LONG));
-            crc2 = _mm_crc32_u32(crc2, *reinterpret_cast<const uint32_t *>(next + 2 * LONG));
+            crc1 = _mm_crc32_u32(crc1, *reinterpret_cast<const uint32_t *>(next + LONG_SHIFT));
+            crc2 = _mm_crc32_u32(crc2, *reinterpret_cast<const uint32_t *>(next + 2 * LONG_SHIFT));
             next += 4;
         } while (next < end);
         crc0 = shift_crc(long_shifts, static_cast<uint32_t>(crc0)) ^ crc1;
         crc0 = shift_crc(long_shifts, static_cast<uint32_t>(crc0)) ^ crc2;
-        next += 2 * LONG;
-        len -= 3 * LONG;
+        next += 2 * LONG_SHIFT;
+        len -= 3 * LONG_SHIFT;
     }
 
-    /* do the same thing, but now on SHORT*3 blocks for the remaining data less
-    than a LONG*3 block */
-    while (len >= 3 * SHORT)
+    /* do the same thing, but now on SHORT_SHIFT*3 blocks for the remaining data less
+    than a LONG_SHIFT*3 block */
+    while (len >= 3 * SHORT_SHIFT)
     {
         crc1 = 0;
         crc2 = 0;
-        end = next + SHORT;
+        end = next + SHORT_SHIFT;
         do
         {
             crc0 = _mm_crc32_u32(crc0, *reinterpret_cast<const uint32_t *>(next));
-            crc1 = _mm_crc32_u32(crc1, *reinterpret_cast<const uint32_t *>(next + SHORT));
-            crc2 = _mm_crc32_u32(crc2, *reinterpret_cast<const uint32_t *>(next + 2 * SHORT));
+            crc1 = _mm_crc32_u32(crc1, *reinterpret_cast<const uint32_t *>(next + SHORT_SHIFT));
+            crc2 = _mm_crc32_u32(crc2, *reinterpret_cast<const uint32_t *>(next + 2 * SHORT_SHIFT));
             next += 4;
         } while (next < end);
         crc0 = shift_crc(short_shifts, static_cast<uint32_t>(crc0)) ^ crc1;
         crc0 = shift_crc(short_shifts, static_cast<uint32_t>(crc0)) ^ crc2;
-        next += 2 * SHORT;
-        len -= 3 * SHORT;
+        next += 2 * SHORT_SHIFT;
+        len -= 3 * SHORT_SHIFT;
     }
 
-    /* compute the crc on the remaining eight-byte units less than a SHORT*3
+    /* compute the crc on the remaining eight-byte units less than a SHORT_SHIFT*3
     block */
     end = next + (len - (len & 7));
     while (next < end)
@@ -443,26 +322,14 @@ static uint32_t append_hw(uint32_t crc, buffer buf, size_t len)
     return static_cast<uint32_t>(crc0) ^ 0xffffffff;
 }
 
-static bool hw_available;
-
-static void detect_hw()
+static bool detect_hw()
 {
     int info[4];
     __cpuid(info, 1);
-    hw_available = (info[2] & (1 << 20)) != 0;
+    return (info[2] & (1 << 20)) != 0;
 }
 
-struct crc32c_initialize
-{
-    crc32c_initialize()
-    {
-        initialize_table();
-        initialize_hw();
-        detect_hw();
-    }
-};
-
-static crc32c_initialize initialize;
+static bool hw_available = detect_hw();
 
 extern "C" CRC32C_API uint32_t crc32c_append(uint32_t crc, buffer input, size_t length)
 {

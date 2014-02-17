@@ -12,6 +12,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "runtests", "runtests\runtes
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "packagetest", "packagetest\packagetest.vcxproj", "{BF1EEFDA-50C2-4131-A81F-DD3C49016B8C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "constants", "constants\constants.vcxproj", "{33165B7D-6642-4D40-9C75-942FF04035CE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -44,6 +46,13 @@ Global
 		{BF1EEFDA-50C2-4131-A81F-DD3C49016B8C}.Release|Win32.Build.0 = Release|Win32
 		{BF1EEFDA-50C2-4131-A81F-DD3C49016B8C}.Release|x64.ActiveCfg = Release|x64
 		{BF1EEFDA-50C2-4131-A81F-DD3C49016B8C}.Release|x64.Build.0 = Release|x64
+		{33165B7D-6642-4D40-9C75-942FF04035CE}.Debug|Win32.ActiveCfg = Debug|Win32
+		{33165B7D-6642-4D40-9C75-942FF04035CE}.Debug|Win32.Build.0 = Debug|Win32
+		{33165B7D-6642-4D40-9C75-942FF04035CE}.Debug|x64.ActiveCfg = Debug|Win32
+		{33165B7D-6642-4D40-9C75-942FF04035CE}.Release|Win32.ActiveCfg = Release|Win32
+		{33165B7D-6642-4D40-9C75-942FF04035CE}.Release|Win32.Build.0 = Release|Win32
+		{33165B7D-6642-4D40-9C75-942FF04035CE}.Release|x64.ActiveCfg = Release|x64
+		{33165B7D-6642-4D40-9C75-942FF04035CE}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
