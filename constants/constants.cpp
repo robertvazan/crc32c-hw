@@ -262,6 +262,24 @@ static uint64_t compute_reversed_clmul_constant(int shift, uint32_t poly)
     return (uint64_t)reverse_bitwise(mod_poly(a, shift / 8 + 1, poly)) << 1;
 }
 
+static std::ostream& operator<<(std::ostream &out, __m128i w128)
+{
+    out << "0x" << std::hex << std::setw(8) << std::setfill('0') << w128.m128i_u32[3] << std::setw(8) << w128.m128i_u32[2] << std::setw(8) << w128.m128i_u32[1] << std::setw(8) << w128.m128i_u32[0];
+    return out;
+}
+
+static __m128i fold_one(__m128i input)
+{
+    __m128i k3 = _mm_set_epi32(0, 0, 0, 0xC5B9CD4C);
+    __m128i k4 = _mm_set_epi32(0, 0, 0, 0xE8A45605);
+
+    //return _mm_castps_si128(_mm_xor_ps(_mm_castsi128_ps(_mm_clmulepi64_si128(input, k3, 0x01)), _mm_castsi128_ps(_mm_clmulepi64_si128(input, k4, 0x00))));
+    __m128i upper = _mm_clmulepi64_si128(input, k4, 0x01);
+    __m128i lower = _mm_clmulepi64_si128(input, k4, 0x00);
+    __m128i shifted = _mm_slli_si128(upper, 8);
+    return _mm_castps_si128(_mm_xor_ps(_mm_castsi128_ps(shifted), _mm_castsi128_ps(lower)));
+}
+
 static void check_clmul_constants()
 {
     std::cout << "P(x)' = " << std::hex << reverse_full(IEEEPOLY) << std::endl;
@@ -272,7 +290,13 @@ static void check_clmul_constants()
     std::cout << "k5' = " << std::hex << compute_reversed_clmul_constant(64, IEEEPOLY) << std::endl;
     std::cout << "k6' = " << std::hex << compute_reversed_clmul_constant(32, IEEEPOLY) << std::endl;
     static uint8_t a[100] = { 1 };
-    std::cout << "u' = " << std::hex << ((uint64_t)reverse_bitwise(div_poly(a, 9, IEEEPOLY)) << 1) << std::endl;
+    std::cout << "u' = " << std::hex << ((uint64_t)reverse_bitwise((uint32_t)div_poly(a, 9, IEEEPOLY)) << 1) << std::endl;
+    __m128i magic = _mm_set_epi32(0, 0, 0, 0x9db42487);
+    for (int i = 0; i < 65; ++i)
+    {
+        std::cout << magic << std::endl;
+        magic = fold_one(magic);
+    }
 }
 
 int main(int argc, char* argv[])

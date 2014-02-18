@@ -13,5 +13,7 @@
 #include <fstream>
 #include <iomanip>
 
+#include <emmintrin.h>
+
 
 // TODO: reference additional headers your program requires here
