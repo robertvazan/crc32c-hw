@@ -5,6 +5,6 @@ Website: [CRC-32C (Castagnoli) for C++ and .NET](http://crc32c.angeloflogic.com/
 
 NuGet: [Crc32C](https://www.nuget.org/packages/Crc32C/)
 
-Download: [crc32c-hw-1.0.3.7z](http://crc32c.angeloflogic.com/download/crc32c-hw-1.0.3.7z)
+Download: [crc32c-hw-1.0.4.7z](http://crc32c.angeloflogic.com/download/crc32c-hw-1.0.4.7z)
 
 License: [zlib license](http://crc32c.angeloflogic.com/license/)
