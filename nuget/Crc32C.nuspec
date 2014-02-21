@@ -3,7 +3,7 @@
   <metadata>
     <id>Crc32C</id>
     <title>CRC-32C (Castagnoli) for C++</title>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <authors>Robert Važan</authors>
     <owners>Robert Važan</owners>
     <licenseUrl>http://crc32c.angeloflogic.com/license/</licenseUrl>
@@ -11,7 +11,7 @@
     <iconUrl>http://crc32c.angeloflogic.com/images/nuget-icon.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Hardware-accelerated implementation of CRC-32C (Castagnoli) with super fast software fallback for C++ projects. Don't confuse with ordinary CRC-32.</description>
-    <releaseNotes>Initial release.</releaseNotes>
+    <releaseNotes>XP compatibility and warning fixes.</releaseNotes>
     <copyright>Copyright (c) 2013-2014 Mark Adler, Robert Važan</copyright>
     <tags>crc, crc32, crc-32, crc32c, crc-32c, castagnoli, native</tags>
   </metadata>

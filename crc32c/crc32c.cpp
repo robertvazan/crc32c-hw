@@ -1,4 +1,6 @@
 /*
+  Copyright (c) 2013 - 2014 Mark Adler, Robert Vazan
+
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the author be held liable for any damages
   arising from the use of this software.
@@ -14,20 +16,11 @@
   2. Altered source versions must be plainly marked as such, and must not be
   misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
+*/
 
-  Mark Adler
-  madler@alumni.caltech.edu
-
-
-  Changes by Robert Vazan:
-
-  - compatibility with Visual C++
-  - software implementation is 20-50% faster
-  - optimizations for 32-bit mode
-  - added benchmark & test code
-  - trivial CRC implementation for consistency checks
-  - wrapped up in a clean DLL
-  */
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+#endif
 
 #include "crc32c.h"
 
