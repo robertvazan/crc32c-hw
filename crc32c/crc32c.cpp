@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013 - 2014 Mark Adler, Robert Vazan
+  Copyright (c) 2013 - 2014, 2016 Mark Adler, Robert Vazan, Max Vysokikh
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the author be held liable for any damages
@@ -25,72 +25,29 @@
 #include "crc32c.h"
 
 #define NOMINMAX
-#include <windows.h>
 
-#include <nmmintrin.h>
-#include <stdio.h>
-
-#include <random>
 #include <algorithm>
 
+#define POLY 0x82f63b78
+#define LONG_SHIFT 8192
+#define SHORT_SHIFT 256
 
 typedef const uint8_t *buffer;
 
+static uint32_t table[16][256];
 
-#include "generated-constants.cpp"
+static uint32_t long_shifts[4][256];
 
+static uint32_t short_shifts[4][256];
 
-static uint32_t append_trivial(uint32_t crc, buffer input, size_t length)
-{
-    for (size_t i = 0; i < length; ++i)
-    {
-        crc = crc ^ input[i];
-        for (int j = 0; j < 8; j++)
-            crc = (crc >> 1) ^ 0x80000000 ^ ((~crc & 1) * POLY);
-    }
-    return crc;
-}
+static bool _tableInitialized;
+
+void calculate_table();
 
 /* Table-driven software version as a fall-back.  This is about 15 times slower
    than using the hardware instructions.  This assumes little-endian integers,
    as is the case on Intel processors that the assembler code here is for. */
-static uint32_t append_adler_table(uint32_t crci, buffer input, size_t length)
-{
-    buffer next = input;
-    uint64_t crc;
-
-    crc = crci ^ 0xffffffff;
-    while (length && ((uintptr_t)next & 7) != 0)
-    {
-        crc = table[0][(crc ^ *next++) & 0xff] ^ (crc >> 8);
-        --length;
-    }
-    while (length >= 8)
-    {
-        crc ^= *(uint64_t *)next;
-        crc = table[7][crc & 0xff]
-            ^ table[6][(crc >> 8) & 0xff]
-            ^ table[5][(crc >> 16) & 0xff]
-            ^ table[4][(crc >> 24) & 0xff]
-            ^ table[3][(crc >> 32) & 0xff]
-            ^ table[2][(crc >> 40) & 0xff]
-            ^ table[1][(crc >> 48) & 0xff]
-            ^ table[0][crc >> 56];
-        next += 8;
-        length -= 8;
-    }
-    while (length)
-    {
-        crc = table[0][(crc ^ *next++) & 0xff] ^ (crc >> 8);
-        --length;
-    }
-    return (uint32_t)crc ^ 0xffffffff;
-}
-
-/* Table-driven software version as a fall-back.  This is about 15 times slower
-   than using the hardware instructions.  This assumes little-endian integers,
-   as is the case on Intel processors that the assembler code here is for. */
-static uint32_t append_table(uint32_t crci, buffer input, size_t length)
+extern "C" CRC32C_API uint32_t crc32c_append_sw(uint32_t crci, buffer input, size_t length)
 {
     buffer next = input;
 #ifdef _M_X64
@@ -174,7 +131,7 @@ static inline uint32_t shift_crc(uint32_t shift_table[][256], uint32_t crc)
 }
 
 /* Compute CRC-32C using the Intel hardware instruction. */
-static uint32_t append_hw(uint32_t crc, buffer buf, size_t len)
+extern "C" CRC32C_API uint32_t crc32c_append_hw(uint32_t crc, buffer buf, size_t len)
 {
     buffer next = buf;
     buffer end;
@@ -313,99 +270,64 @@ static uint32_t append_hw(uint32_t crc, buffer buf, size_t len)
     return static_cast<uint32_t>(crc0) ^ 0xffffffff;
 }
 
-static bool detect_hw()
+extern "C" CRC32C_API int crc32c_hw_available()
 {
     int info[4];
     __cpuid(info, 1);
     return (info[2] & (1 << 20)) != 0;
+
 }
 
-static bool hw_available = detect_hw();
+void calculate_table() 
+{
+	for(int i = 0; i < 256; i++) 
+	{
+		uint32_t res = (uint32_t)i;
+		for(int t = 0; t < 16; t++) {
+			for (int k = 0; k < 8; k++) res = (res & 1) == 1 ? POLY ^ (res >> 1) : (res >> 1);
+			table[t][i] = res;
+		}
+	}
+
+	_tableInitialized = true;
+}
+
+void calculate_table_hw()
+{
+	for(int i = 0; i < 256; i++) 
+	{
+		uint32_t res = (uint32_t)i;
+		for (int k = 0; k < 8 * (SHORT_SHIFT - 4); k++) res = (res & 1) == 1 ? POLY ^ (res >> 1) : (res >> 1);
+		for(int t = 0; t < 4; t++) {
+			for (int k = 0; k < 8; k++) res = (res & 1) == 1 ? POLY ^ (res >> 1) : (res >> 1);
+			short_shifts[3 - t][i] = res;
+		}
+		for (int k = 0; k < 8 * (LONG_SHIFT - 4 - SHORT_SHIFT); k++) res = (res & 1) == 1 ? POLY ^ (res >> 1) : (res >> 1);
+		for(int t = 0; t < 4; t++) {
+			for (int k = 0; k < 8; k++) res = (res & 1) == 1 ? POLY ^ (res >> 1) : (res >> 1);
+			long_shifts[3 - t][i] = res;
+		}
+	}
+}
+
+uint32_t (*append_func)(uint32_t, buffer, size_t);
+
+void __crc32_init()
+{
+	if (append_func == NULL)
+	{
+		// somebody can call sw version directly, so, precalculate table for this version
+		calculate_table();
+		if (crc32c_hw_available()) {
+			calculate_table_hw();
+			append_func = crc32c_append_hw;
+		} else {
+			append_func = crc32c_append_sw;
+		}
+	}
+}
 
 extern "C" CRC32C_API uint32_t crc32c_append(uint32_t crc, buffer input, size_t length)
 {
-    if (hw_available)
-        return append_hw(crc, input, length);
-    else
-        return append_table(crc, input, length);
-}
-
-#define TEST_BUFFER 65536
-#define TEST_SLICES 1000000
-
-static int benchmark(const char *name, uint32_t(*function)(uint32_t, buffer, size_t), buffer input, int *offsets, int *lengths, uint32_t *crcs)
-{
-    uint64_t startTime = GetTickCount64();
-    int slice = 0;
-    uint64_t totalBytes = 0;
-    bool first = true;
-    int iterations = 0;
-    uint32_t crc = 0;
-    while (GetTickCount64() - startTime < 1000)
-    {
-        crc = function(crc, input + offsets[slice], lengths[slice]);
-        totalBytes += lengths[slice];
-        if (first)
-            crcs[slice] = crc;
-        ++slice;
-        ++iterations;
-        if (slice == TEST_SLICES)
-        {
-            slice = 0;
-            first = false;
-        }
-    }
-    int time = static_cast<int>(GetTickCount64() - startTime);
-    double throughput = totalBytes * 1000.0 / time;
-    printf("%s: ", name);
-    if (throughput > 1024.0 * 1024.0 * 1024.0)
-        printf("%.1f GB/s\n", throughput / 1024 / 1024 / 1024);
-    else
-        printf("%.0f MB/s\n", throughput / 1024 / 1024);
-    return std::min(TEST_SLICES, iterations);
-}
-
-static void compare_crcs(const char *leftName, uint32_t *left, const char *rightName, uint32_t *right, int count)
-{
-    for (int i = 0; i < count; ++i)
-        if (left[i] != right[i])
-        {
-            printf("CRC mismatch between algorithms %s and %s at offset %d: %x vs %x\n", leftName, rightName, i, left[i], right[i]);
-            exit(1);
-        }
-}
-
-extern "C" CRC32C_API void crc32c_unittest()
-{
-    std::random_device rd;
-    std::uniform_int_distribution<int> byteDist(0, 255);
-    uint8_t *input = new uint8_t[TEST_BUFFER];
-    for (int i = 0; i < TEST_BUFFER; ++i)
-        input[i] = byteDist(rd);
-    int *offsets = new int[TEST_SLICES];
-    int *lengths = new int[TEST_SLICES];
-    std::uniform_int_distribution<int> lengthDist(0, TEST_BUFFER);
-    for (int i = 0; i < TEST_SLICES; ++i)
-    {
-        lengths[i] = lengthDist(rd);
-        std::uniform_int_distribution<int> offsetDist(0, TEST_BUFFER - lengths[i]);
-        offsets[i] = offsetDist(rd);
-    }
-    uint32_t *crcsTrivial = new uint32_t[TEST_SLICES];
-    uint32_t *crcsAdlerTable = new uint32_t[TEST_SLICES];
-    uint32_t *crcsTable = new uint32_t[TEST_SLICES];
-    uint32_t *crcsHw = new uint32_t[TEST_SLICES];
-    int iterationsTrivial = benchmark("trivial", append_trivial, input, offsets, lengths, crcsTrivial);
-    int iterationsAdlerTable = benchmark("adler_table", append_adler_table, input, offsets, lengths, crcsAdlerTable);
-    compare_crcs("trivial", crcsTrivial, "adler_table", crcsAdlerTable, std::min(iterationsTrivial, iterationsAdlerTable));
-    int iterationsTable = benchmark("table", append_table, input, offsets, lengths, crcsTable);
-    compare_crcs("adler_table", crcsAdlerTable, "table", crcsTable, std::min(iterationsAdlerTable, iterationsTable));
-    if (hw_available)
-    {
-        int iterationsHw = benchmark("hw", append_hw, input, offsets, lengths, crcsHw);
-        compare_crcs("table", crcsTable, "hw", crcsHw, std::min(iterationsTable, iterationsHw));
-    }
-    else
-        printf("HW doesn't have crc instruction\n");
-    benchmark("auto", crc32c_append, input, offsets, lengths, crcsHw);
+	return append_func(crc, input, length);
 }

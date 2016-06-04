@@ -24,6 +24,20 @@ extern "C" CRC32C_API uint32_t crc32c_append(
     const uint8_t *input,       // Data to be put through the CRC algorithm.
     size_t length);             // Length of the data in the input buffer.
 
-extern "C" CRC32C_API void crc32c_unittest();
+
+/*
+	Software fallback version of CRC-32C (Castagnoli) checksum.
+*/
+extern "C" CRC32C_API uint32_t crc32c_append_sw(uint32_t crc, const uint8_t *input, size_t length);
+
+/*
+	Hardware version of CRC-32C (Castagnoli) checksum. Will fail, if CPU does not support related instructions. Use a crc32c_append version instead of.
+*/
+extern "C" CRC32C_API uint32_t crc32c_append_hw(uint32_t crc, const uint8_t *input, size_t length);
+
+/*
+	Checks is hardware version of CRC-32C is available.
+*/
+extern "C" CRC32C_API int crc32c_hw_available();
 
 #endif
