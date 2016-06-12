@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include <random>
+#include <algorithm>
 #define NOMINMAX
 #include <windows.h>
 

@@ -6,7 +6,7 @@
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-    crc32c_unittest();
+    crc32c_hw_available();
 	return 0;
 }
 
