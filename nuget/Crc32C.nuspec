@@ -6,9 +6,9 @@
     <version>1.1.0</version>
     <authors>Robert Važan</authors>
     <owners>Robert Važan</owners>
-    <licenseUrl>http://crc32c.angeloflogic.com/license/</licenseUrl>
-    <projectUrl>http://crc32c.angeloflogic.com/</projectUrl>
-    <iconUrl>http://crc32c.angeloflogic.com/images/nuget-icon.png</iconUrl>
+    <licenseUrl>https://crc32c.machinezoo.com/license/</licenseUrl>
+    <projectUrl>https://crc32c.machinezoo.com/</projectUrl>
+    <iconUrl>https://crc32c.machinezoo.com/images/nuget-icon.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Hardware-accelerated implementation of CRC-32C (Castagnoli) with super fast software fallback for C++ projects. Don't confuse with ordinary CRC-32.</description>
     <releaseNotes>Reduced code footprint.</releaseNotes>
