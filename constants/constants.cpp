@@ -1,3 +1,4 @@
+// Part of CRC-32C library: https://crc32c.machinezoo.com/
 // constants.cpp : Defines the entry point for the console application.
 //
 

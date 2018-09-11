@@ -1,3 +1,4 @@
+// Part of CRC-32C library: https://crc32c.machinezoo.com/
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include <windows.h>
 

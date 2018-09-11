@@ -1,3 +1,4 @@
+// Part of CRC-32C library: https://crc32c.machinezoo.com/
 /*
   Copyright (c) 2013 - 2014, 2016 Mark Adler, Robert Vazan, Max Vysokikh
 

@@ -1,3 +1,4 @@
+// Part of CRC-32C library: https://crc32c.machinezoo.com/
 #ifndef CRC32C_H
 #define CRC32C_H
 
