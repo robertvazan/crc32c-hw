@@ -8,4 +8,6 @@ x86
 *.opensdf
 *.aps
 *.nupkg
-
+.vs
+*.user
+packages
