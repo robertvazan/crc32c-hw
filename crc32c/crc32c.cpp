@@ -27,6 +27,7 @@
 
 #define NOMINMAX
 
+#include <intrin.h>
 #include <algorithm>
 
 #define POLY 0x82f63b78
