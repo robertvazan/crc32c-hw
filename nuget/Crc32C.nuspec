@@ -6,12 +6,11 @@
     <version>1.1.0</version>
     <authors>robertvazan</authors>
     <owners>robertvazan</owners>
-    <licenseUrl>https://crc32c.machinezoo.com/license/</licenseUrl>
+    <licenseUrl>https://opensource.org/licenses/Zlib</licenseUrl>
     <projectUrl>https://crc32c.machinezoo.com/</projectUrl>
-    <iconUrl>https://crc32c.machinezoo.com/images/nuget-icon.png</iconUrl>
+    <iconUrl>https://cdn.machinezoo.com/images/crc32c/nuget-icon.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Hardware-accelerated implementation of CRC-32C (Castagnoli) with super fast software fallback for C++ projects. Don't confuse with ordinary CRC-32.</description>
-    <releaseNotes>Reduced code footprint.</releaseNotes>
     <copyright>Copyright (c) 2013-2020 Mark Adler, Robert Važan, Konstantin Dyachenko</copyright>
     <tags>crc, crc32, crc-32, crc32c, crc-32c, castagnoli, native</tags>
   </metadata>
