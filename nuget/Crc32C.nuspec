@@ -6,17 +6,18 @@
     <version>1.1.4</version>
     <authors>robertvazan</authors>
     <owners>robertvazan</owners>
-    <licenseUrl>https://opensource.org/licenses/Zlib</licenseUrl>
+    <license type="expression">Zlib</license>
     <projectUrl>https://crc32c.machinezoo.com/</projectUrl>
-    <iconUrl>https://cdn.machinezoo.com/images/crc32c/nuget-icon.png</iconUrl>
+    <icon>images/icon.png</icon>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Hardware-accelerated implementation of CRC-32C (Castagnoli) with super fast software fallback for C++ projects. Don't confuse with ordinary CRC-32.</description>
     <copyright>Copyright (c) 2013-2020 Mark Adler, Robert Važan, Konstantin Dyachenko</copyright>
     <tags>crc, crc32, crc-32, crc32c, crc-32c, castagnoli, native</tags>
   </metadata>
   <files>
-    <file src="../crc32c/crc32c.h" target="/lib/native/include/crc32c.h" />
-    <file src="../crc32c/crc32c.cpp" target="/lib/native/src/crc32c.cpp" />
-    <file src="Crc32C.props" target="/build/native/Crc32C.props" />
+    <file src="../crc32c/crc32c.h" target="lib/native/include/crc32c.h" />
+    <file src="../crc32c/crc32c.cpp" target="lib/native/src/crc32c.cpp" />
+    <file src="Crc32C.props" target="build/native/Crc32C.props" />
+    <file src="icon.png" target="images/icon.png" />
   </files>
 </package>
