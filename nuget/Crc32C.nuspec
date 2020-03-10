@@ -3,7 +3,7 @@
   <metadata>
     <id>Crc32C</id>
     <title>CRC-32C (Castagnoli) for C++</title>
-    <version>1.1.3</version>
+    <version>1.1.4</version>
     <authors>robertvazan</authors>
     <owners>robertvazan</owners>
     <licenseUrl>https://opensource.org/licenses/Zlib</licenseUrl>
