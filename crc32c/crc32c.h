@@ -27,6 +27,7 @@
 #endif
 
 #include <stdint.h>
+#include <stddef.h>
 
 /*
     Computes CRC-32C (Castagnoli) checksum. Uses Intel's CRC32 instruction if it is available.
