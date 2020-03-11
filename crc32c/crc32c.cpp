@@ -27,7 +27,15 @@
 
 #define NOMINMAX
 
+#if defined(__GNUC__) || defined(__GNUG__)
+#include <cpuid.h>
+#include <x86intrin.h>
+#define CRC32C_GCC
+#elif defined(_MSC_VER)
 #include <intrin.h>
+#define CRC32C_MSVC
+#endif
+
 #include <algorithm>
 
 #define POLY 0x82f63b78
@@ -275,7 +283,11 @@ extern "C" CRC32C_API uint32_t crc32c_append_hw(uint32_t crc, buffer buf, size_t
 extern "C" CRC32C_API int crc32c_hw_available()
 {
     int info[4];
+#ifdef CRC32C_GCC
+    __cpuid(1, info[0], info[1], info[2], info[3]);
+#else
     __cpuid(info, 1);
+#endif
     return (info[2] & (1 << 20)) != 0;
 
 }
