@@ -10,8 +10,10 @@
 #endif
 
 #include <stdio.h>
-#include <tchar.h>
 
+#if defined(_MSC_VER)
+#include <tchar.h>
+#endif
 
 
 // TODO: reference additional headers your program requires here
