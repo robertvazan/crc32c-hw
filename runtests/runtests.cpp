@@ -32,7 +32,7 @@ uint32_t trivial_append_sw(uint32_t crc, buffer input, size_t length)
     return crc;
 }
 
-void calculate_table() 
+void calculate_table_() 
 {
 	for(int i = 0; i < 256; i++) 
 	{
@@ -157,7 +157,7 @@ void crc32c_unittest()
     uint32_t *crcsTable = new uint32_t[TEST_SLICES];
     uint32_t *crcsHw = new uint32_t[TEST_SLICES];
     int iterationsTrivial = benchmark("trivial", trivial_append_sw, input, offsets, lengths, crcsTrivial);
-	calculate_table(); // precalculating table out-of-benchmark, because it is one-time operation
+    calculate_table_(); // precalculating table out-of-benchmark, because it is one-time operation
 	int iterationsAdlerTable = benchmark("adler_table", adler_append_sw, input, offsets, lengths, crcsAdlerTable);
     compare_crcs("trivial", crcsTrivial, "adler_table", crcsAdlerTable, std::min(iterationsTrivial, iterationsAdlerTable));
     int iterationsTable = benchmark("table", crc32c_append_sw, input, offsets, lengths, crcsTable);
