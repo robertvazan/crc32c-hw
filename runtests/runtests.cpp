@@ -88,7 +88,7 @@ static uint64_t GetTicks()
     double uptime_seconds;
     if (std::ifstream("/proc/uptime", std::ios::in) >> uptime_seconds)
     {
-        return static_cast<uint64_t>(uptime_seconds * 1000.0)
+        return static_cast<uint64_t>(uptime_seconds * 1000.0);
     }
     return 0;
 #endif
