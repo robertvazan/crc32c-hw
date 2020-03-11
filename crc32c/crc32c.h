@@ -2,11 +2,25 @@
 #ifndef CRC32C_H
 #define CRC32C_H
 
+#if defined(__GNUC__) || defined(__GNUG__)
+#define CRC32C_GCC
+#elif defined(_MSC_VER)
+#define CRC32C_MSC
+#endif
+
 #ifndef CRC32C_STATIC
 #ifdef CRC32C_EXPORTS
+#ifdef CRC32C_GCC
+#define CRC32C_API __attribute__ ((dllexport))
+#else
 #define CRC32C_API __declspec(dllexport)
+#endif
+#else
+#ifdef CRC32C_GCC
+#define CRC32C_API __attribute__ ((dllimport))
 #else
 #define CRC32C_API __declspec(dllimport)
+#endif
 #endif
 #else
 #define CRC32C_API

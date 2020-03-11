@@ -27,13 +27,11 @@
 
 #define NOMINMAX
 
-#if defined(__GNUC__) || defined(__GNUG__)
+#ifdef CRC32C_GCC
 #include <cpuid.h>
 #include <x86intrin.h>
-#define CRC32C_GCC
-#elif defined(_MSC_VER)
+#else
 #include <intrin.h>
-#define CRC32C_MSVC
 #endif
 
 #include <algorithm>
