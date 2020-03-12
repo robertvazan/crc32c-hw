@@ -832,12 +832,6 @@ static union {
     }
 };
 
-/*
-static bool _tableInitialized;
-
-void calculate_table();
-*/
-
 /* Table-driven software version as a fall-back.  This is about 15 times slower
    than using the hardware instructions.  This assumes little-endian integers,
    as is the case on Intel processors that the assembler code here is for. */
@@ -1075,59 +1069,7 @@ CRC32C_API int crc32c_hw_available()
     return (info[2] & (1 << 20)) != 0;
 }
 
-/*
-void calculate_table() 
-{
-	for(int i = 0; i < 256; i++) 
-	{
-		uint32_t res = (uint32_t)i;
-		for(int t = 0; t < 16; t++) {
-			for (int k = 0; k < 8; k++) res = (res & 1) == 1 ? POLY ^ (res >> 1) : (res >> 1);
-			table[t][i] = res;
-		}
-	}
-
-	_tableInitialized = true;
-}
-
-
-void calculate_table_hw()
-{
-	for(int i = 0; i < 256; i++) 
-	{
-		uint32_t res = (uint32_t)i;
-		for (int k = 0; k < 8 * (SHORT_SHIFT - 4); k++) res = (res & 1) == 1 ? POLY ^ (res >> 1) : (res >> 1);
-		for(int t = 0; t < 4; t++) {
-			for (int k = 0; k < 8; k++) res = (res & 1) == 1 ? POLY ^ (res >> 1) : (res >> 1);
-			short_shifts[3 - t][i] = res;
-		}
-		for (int k = 0; k < 8 * (LONG_SHIFT - 4 - SHORT_SHIFT); k++) res = (res & 1) == 1 ? POLY ^ (res >> 1) : (res >> 1);
-		for(int t = 0; t < 4; t++) {
-			for (int k = 0; k < 8; k++) res = (res & 1) == 1 ? POLY ^ (res >> 1) : (res >> 1);
-			long_shifts[3 - t][i] = res;
-		}
-	}
-}
-*/
-
 uint32_t (*append_func)(uint32_t, buffer, size_t) = crc32c_append_sw;
-
-/*
-void __crc32_init()
-{
-	if (append_func == NULL)
-	{
-		// somebody can call sw version directly, so, precalculate table for this version
-		calculate_table();
-		if (crc32c_hw_available()) {
-			calculate_table_hw();
-			append_func = crc32c_append_hw;
-		} else {
-			append_func = crc32c_append_sw;
-		}
-	}
-}
-*/
 
 void __crc32_init()
 {
