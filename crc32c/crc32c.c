@@ -1071,7 +1071,7 @@ CRC32C_API int crc32c_hw_available()
 
 uint32_t (*append_func)(uint32_t, buffer, size_t) = crc32c_append_sw;
 
-#if CRC32C_GCC
+#ifdef CRC32C_GCC
 void __attribute__((constructor)) __crc32_init()
 #else
 void __crc32_init()
