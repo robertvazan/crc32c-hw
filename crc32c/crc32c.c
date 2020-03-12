@@ -1073,7 +1073,6 @@ CRC32C_API int crc32c_hw_available()
     __cpuid(info, 1);
 #endif
     return (info[2] & (1 << 20)) != 0;
-
 }
 
 /*
