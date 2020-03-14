@@ -60,6 +60,13 @@ CRC32C_API uint32_t crc32c_append_hw(uint32_t crc, const uint8_t *input, size_t 
 */
 CRC32C_API int crc32c_hw_available();
 
+#ifndef __cplusplus
+/*
+    Initializes the CRC-32C library. Should be called only by C users to enable hardware version for crc32c_append.
+*/
+CRC32C_API void crc32c_init();
+#endif
+
 
 #ifdef __cplusplus
 }

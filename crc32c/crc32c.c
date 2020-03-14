@@ -1069,18 +1069,21 @@ CRC32C_API int crc32c_hw_available()
     return (info[2] & (1 << 20)) != 0;
 }
 
-uint32_t (*append_func)(uint32_t, buffer, size_t) = crc32c_append_sw;
-
-#ifdef CRC32C_GCC
-void __attribute__((constructor)) __crc32_init()
+uint32_t(*append_func)(uint32_t, buffer, size_t)
+#ifdef __cplusplus
+    = crc32c_hw_available() ? crc32c_append_hw : crc32c_append_sw;
 #else
-void __crc32_init()
+    = crc32c_append_sw;
 #endif
+
+#ifndef __cplusplus
+CRC32C_API void crc32c_init()
 {
     if (crc32c_hw_available()) {
         append_func = crc32c_append_hw;
     }
 }
+#endif
 
 CRC32C_API uint32_t crc32c_append(uint32_t crc, buffer input, size_t length)
 {
