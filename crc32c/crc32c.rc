@@ -51,8 +51,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,1,5,0
- PRODUCTVERSION 1,1,5,0
+ FILEVERSION 1,2,0,0
+ PRODUCTVERSION 1,2,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -69,7 +69,7 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Robert Vazan"
             VALUE "FileDescription", "Computes CRC-32C (Castagnoli) using hardware acceleration on Intel processors"
-            VALUE "FileVersion", "1.1.5.0"
+            VALUE "FileVersion", "1.2.0.0"
 #ifdef WIN64
             VALUE "InternalName", "crc32c64.dll"
 #else
@@ -82,7 +82,7 @@ BEGIN
             VALUE "OriginalFilename", "crc32c32.dll"
 #endif
             VALUE "ProductName", "CRC-32C (Castagnoli) library"
-            VALUE "ProductVersion", "1.1.5.0"
+            VALUE "ProductVersion", "1.2.0.0"
         END
     END
     BLOCK "VarFileInfo"
