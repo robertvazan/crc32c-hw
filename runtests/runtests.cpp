@@ -5,7 +5,11 @@
 #include <random>
 #include <algorithm>
 #define NOMINMAX
+#if defined(_MSC_VER)
 #include <windows.h>
+#else
+#include <fstream>
+#endif
 
 #include "crc32c.h"
 
@@ -76,15 +80,29 @@ uint32_t adler_append_sw(uint32_t crci, buffer input, size_t length)
     return (uint32_t)crc ^ 0xffffffff;
 }
 
+static uint64_t GetTicks()
+{
+#if defined(_MSC_VER)
+    return GetTickCount64();
+#else
+    double uptime_seconds;
+    if (std::ifstream("/proc/uptime", std::ios::in) >> uptime_seconds)
+    {
+        return static_cast<uint64_t>(uptime_seconds * 1000.0);
+    }
+    return 0;
+#endif
+}
+
 static int benchmark(const char *name, uint32_t(*function)(uint32_t, buffer, size_t), buffer input, int *offsets, int *lengths, uint32_t *crcs)
 {
-    uint64_t startTime = GetTickCount64();
+    uint64_t startTime = GetTicks();
     int slice = 0;
     uint64_t totalBytes = 0;
     bool first = true;
     int iterations = 0;
     uint32_t crc = 0;
-    while (GetTickCount64() - startTime < 1000)
+    while (GetTicks() - startTime < 1000)
     {
         crc = function(crc, input + offsets[slice], lengths[slice]);
         totalBytes += lengths[slice];
@@ -98,7 +116,7 @@ static int benchmark(const char *name, uint32_t(*function)(uint32_t, buffer, siz
             first = false;
         }
     }
-    int time = static_cast<int>(GetTickCount64() - startTime);
+    int time = static_cast<int>(GetTicks() - startTime);
     double throughput = totalBytes * 1000.0 / time;
     printf("%s: ", name);
     if (throughput > 1024.0 * 1024.0 * 1024.0)
@@ -139,7 +157,7 @@ void crc32c_unittest()
     uint32_t *crcsTable = new uint32_t[TEST_SLICES];
     uint32_t *crcsHw = new uint32_t[TEST_SLICES];
     int iterationsTrivial = benchmark("trivial", trivial_append_sw, input, offsets, lengths, crcsTrivial);
-	calculate_table(); // precalculating table out-of-benchmark, because it is one-time operation
+    calculate_table(); // precalculating table out-of-benchmark, because it is one-time operation
 	int iterationsAdlerTable = benchmark("adler_table", adler_append_sw, input, offsets, lengths, crcsAdlerTable);
     compare_crcs("trivial", crcsTrivial, "adler_table", crcsAdlerTable, std::min(iterationsTrivial, iterationsAdlerTable));
     int iterationsTable = benchmark("table", crc32c_append_sw, input, offsets, lengths, crcsTable);

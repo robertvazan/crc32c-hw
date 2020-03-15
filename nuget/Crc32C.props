@@ -7,7 +7,7 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\lib\native\src\crc32c.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\lib\native\src\crc32c.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
