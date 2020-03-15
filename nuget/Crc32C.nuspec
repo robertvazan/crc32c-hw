@@ -16,7 +16,7 @@
   </metadata>
   <files>
     <file src="../crc32c/crc32c.h" target="lib/native/include/crc32c.h" />
-    <file src="../crc32c/crc32c.cpp" target="lib/native/src/crc32c.cpp" />
+    <file src="../crc32c/crc32c.c" target="lib/native/src/crc32c.c" />
     <file src="Crc32C.props" target="build/native/Crc32C.props" />
     <file src="icon.png" target="images/icon.png" />
   </files>
