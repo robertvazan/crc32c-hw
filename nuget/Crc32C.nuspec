@@ -11,7 +11,7 @@
     <icon>images/icon.png</icon>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Hardware-accelerated implementation of CRC-32C (Castagnoli) with super fast software fallback for C++ projects. Don't confuse with ordinary CRC-32.</description>
-    <copyright>Copyright (c) 2013-2020 Mark Adler, Robert Važan, Konstantin Dyachenko</copyright>
+    <copyright>Copyright (c) 2013-2021 Mark Adler, Robert Važan, Konstantin Dyachenko</copyright>
     <tags>crc, crc32, crc-32, crc32c, crc-32c, castagnoli, native</tags>
     <dependencies>
       <group targetFramework="native"></group>

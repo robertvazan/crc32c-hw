@@ -75,7 +75,7 @@ BEGIN
 #else
             VALUE "InternalName", "crc32c32.dll"
 #endif
-            VALUE "LegalCopyright", "Copyright (C) 2013-2020 Mark Adler, Robert Vazan, Konstantin Dyachenko"
+            VALUE "LegalCopyright", "Copyright (C) 2013-2021 Mark Adler, Robert Vazan, Konstantin Dyachenko"
 #ifdef WIN64
             VALUE "OriginalFilename", "crc32c64.dll"
 #else
