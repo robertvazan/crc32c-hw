@@ -1,5 +1,7 @@
 # CRC-32C (Castagnoli) for C++ #
 
+**UNMAINTAINED**: This library is no longer maintained, because I rarely use Windows or C++ these days. It has not been updated in years. You are welcome to adopt the library if you find it useful.
+
 This is a hardware-accelerated implementation of CRC-32C (Castagnoli) for Visual C++.
 Intel's CRC32 instruction is used if available. Otherwise this library uses fast software fallback.
 
